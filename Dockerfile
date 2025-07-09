@@ -25,4 +25,8 @@ RUN curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-li
     rm /tmp/node.tar.xz
 
 # ---- Install pnpm ----
-RUN npm install -g pnpm@9.15.6
+RUN npm config set prefix /usr/local && \
+    npm install -g pnpm@9.15.6
+
+# check and print pnpm version. This ensures pnpm is installed correctly
+RUN pnpm --version
