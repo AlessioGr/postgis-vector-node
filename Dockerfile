@@ -1,30 +1,28 @@
-ARG PG_MAJOR=17
-FROM postgis/postgis:$PG_MAJOR-3.5
-ARG PG_MAJOR
+FROM ghcr.io/payloadcms/postgis-vector:latest
 
-LABEL org.opencontainers.image.title="postgis-vector" \
-      org.opencontainers.image.description="postgresql+postgis container with pgvector added" \
+LABEL org.opencontainers.image.title="postgis-vector-node" \
+      org.opencontainers.image.description="postgresql+postgis+node container with pgvector added" \
       org.opencontainers.image.vendor="Payload" \
       org.opencontainers.image.authors="Payload <dev@payloadcms.com>" \
-      org.opencontainers.image.version="17-3.5" \
+      org.opencontainers.image.version="1.0.0" \
       org.opencontainers.image.licenses="MIT" \
-      org.opencontainers.image.url="https://github.com/payloadcms/postgis-vector" \
-      org.opencontainers.image.source="https://github.com/payloadcms/postgis-vector"
+      org.opencontainers.image.url="https://github.com/AlessioGr/postgis-vector-node" \
+      org.opencontainers.image.source="https://github.com/AlessioGr/postgis-vector-node"
 
-RUN apt-get update \
-  && apt-mark hold locales \
-  && apt-get install -qq -y --no-install-recommends \
-  build-essential \
-  clang-13 \
-  llvm-13 \
-  llvm-13-dev \
-  pgxnclient \
-  postgresql-server-dev-$PG_MAJOR \
-  && pgxn install 'vector=0.8.0' \
-  && apt-get remove -y build-essential clang-13 llvm-13 llvm-13-dev postgresql-server-dev-$PG_MAJOR \
-  && apt-get autoremove -y \
-  && apt-get clean \
-  && apt-mark unhold locales \
-  && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+# ---- Install system dependencies ----
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends \
+        ca-certificates curl gnupg xz-utils && \
+    rm -rf /var/lib/apt/lists/*
 
-COPY ./initdb-extensions.sh /docker-entrypoint-initdb.d/20_extensions.sh
+# ---- Install Node.js 24.4.0 manually (exact version pin) ----
+ENV NODE_VERSION=24.4.0
+RUN curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz \
+        -o /tmp/node.tar.xz && \
+    mkdir -p /usr/local/lib/nodejs && \
+    tar -xJf /tmp/node.tar.xz -C /usr/local/lib/nodejs && \
+    ln -sf /usr/local/lib/nodejs/node-v${NODE_VERSION}-linux-x64/bin/* /usr/local/bin/ && \
+    rm /tmp/node.tar.xz
+
+# ---- Install pnpm ----
+RUN npm install -g pnpm@9.15.6

@@ -1,6 +1,6 @@
-# postgis-vector
+# postgis-vector-node
 
-postgresql,postgis docker container with pgvector added
+postgresql,postgis docker container with pgvector, node and pnpm added
 
 [![Build Status](https://github.com/payloadcms/postgis-vector/actions/workflows/build.yml/badge.svg)](https://github.com/payloadcms/postgis-vector/actions)
 
