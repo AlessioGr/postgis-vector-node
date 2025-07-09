@@ -1,4 +1,6 @@
+# syntax=docker/dockerfile:1.7
 FROM ghcr.io/payloadcms/postgis-vector:latest
+
 
 LABEL org.opencontainers.image.title="postgis-vector-node" \
       org.opencontainers.image.description="postgresql+postgis+node container with pgvector added" \
@@ -9,19 +11,26 @@ LABEL org.opencontainers.image.title="postgis-vector-node" \
       org.opencontainers.image.url="https://github.com/AlessioGr/postgis-vector-node" \
       org.opencontainers.image.source="https://github.com/AlessioGr/postgis-vector-node"
 
-# ---- Install system dependencies ----
-RUN apt-get update && \
-    apt-get install -y --no-install-recommends \
-        ca-certificates curl gnupg xz-utils && \
-    rm -rf /var/lib/apt/lists/*
+# ---- system deps ----
+RUN --mount=type=cache,target=/var/cache/apt \
+    apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates curl xz-utils \
+    && rm -rf /var/lib/apt/lists/*
 
-# ---- Install Node.js 24.4.0 manually (exact version pin) ----
+# ---- Node 24.4.0, correct architecture -------------------------------------
+ARG TARGETARCH
 ENV NODE_VERSION=24.4.0
-RUN curl -fsSL https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz \
-        -o /tmp/node.tar.xz && \
+RUN set -eux; \
+    case "${TARGETARCH}" in \
+      amd64) NODE_ARCH=x64 ;; \
+      arm64) NODE_ARCH=arm64 ;; \
+      *)     echo "Unsupported arch ${TARGETARCH}" && exit 1 ;; \
+    esac && \
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" \
+      -o /tmp/node.tar.xz && \
     mkdir -p /usr/local/lib/nodejs && \
     tar -xJf /tmp/node.tar.xz -C /usr/local/lib/nodejs && \
-    ln -sf /usr/local/lib/nodejs/node-v${NODE_VERSION}-linux-x64/bin/* /usr/local/bin/ && \
+    ln -sf /usr/local/lib/nodejs/node-v${NODE_VERSION}-linux-${NODE_ARCH}/bin/* /usr/local/bin/ && \
     rm /tmp/node.tar.xz
 
 # ---- Install pnpm ----
