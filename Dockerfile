@@ -39,8 +39,10 @@ RUN set -eux; \
     rm /tmp/node.tar.xz
 
 # ---- Install pnpm ----
-RUN npm config set prefix /usr/local && \
-    npm install -g pnpm@9.15.6
+ARG TARGETARCH
+RUN curl -fL https://github.com/pnpm/pnpm/releases/download/v9.15.6/pnpm-linux-${TARGETARCH} \
+    -o /usr/local/bin/pnpm && \
+    chmod +x /usr/local/bin/pnpm
 
 # check and print pnpm version. This ensures pnpm is installed correctly
 RUN pnpm --version
