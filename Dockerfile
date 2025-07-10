@@ -18,10 +18,9 @@ LABEL org.opencontainers.image.title="postgis-vector-node" \
       org.opencontainers.image.source="https://github.com/AlessioGr/postgis-vector-node"
 
 # ---- system deps ----
-RUN --mount=type=cache,target=/var/cache/apt \
-    apt-get update && \
-    apt-get install -y --no-install-recommends ca-certificates curl xz-utils \
-    && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates curl xz-utils && \
+    rm -rf /var/lib/apt/lists/*
 
 # ---- Node 24.4.0, correct architecture -------------------------------------
 ARG TARGETARCH
