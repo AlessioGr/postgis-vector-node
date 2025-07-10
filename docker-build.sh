@@ -1,4 +1,5 @@
-#!/bin/bash
+#!/usr/bin/env bash
+
 docker buildx create --name multiarch-builder --use
 
 docker buildx build \
