@@ -40,9 +40,15 @@ RUN set -eux; \
 
 # ---- Install pnpm ----
 ARG TARGETARCH
-RUN curl -fL https://github.com/pnpm/pnpm/releases/download/v9.15.6/pnpm-linux-${TARGETARCH} \
+RUN set -eux; \
+  case "${TARGETARCH}" in \
+    amd64) PNPM_ARCH=x64 ;; \
+    arm64) PNPM_ARCH=arm64 ;; \
+    *)     echo "Unsupported arch ${TARGETARCH}" && exit 1 ;; \
+  esac && \
+  curl -fL "https://github.com/pnpm/pnpm/releases/download/v9.15.6/pnpm-linux-${PNPM_ARCH}" \
     -o /usr/local/bin/pnpm && \
-    chmod +x /usr/local/bin/pnpm
+  chmod +x /usr/local/bin/pnpm
 
 # check and print pnpm version. This ensures pnpm is installed correctly
 RUN pnpm --version
