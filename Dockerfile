@@ -4,6 +4,15 @@
 # Stage 1: Node.js + pnpm #
 ############################
 
+LABEL org.opencontainers.image.title="postgis-vector-node" \
+      org.opencontainers.image.description="postgresql+postgis+node container with pgvector added" \
+      org.opencontainers.image.vendor="Payload" \
+      org.opencontainers.image.authors="Payload <dev@payloadcms.com>" \
+      org.opencontainers.image.version="1.3.0" \
+      org.opencontainers.image.licenses="MIT" \
+      org.opencontainers.image.url="https://github.com/AlessioGr/postgis-vector-node" \
+      org.opencontainers.image.source="https://github.com/AlessioGr/postgis-vector-node"
+
 FROM --platform=linux/amd64 debian:bookworm AS node-builder
 
 ARG NODE_VERSION=24.4.0
