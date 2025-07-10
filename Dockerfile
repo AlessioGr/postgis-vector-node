@@ -1,12 +1,19 @@
 # syntax=docker/dockerfile:1.7
-FROM ghcr.io/payloadcms/postgis-vector:latest
+ARG TARGETARCH=amd64
+FROM --platform=$BUILDPLATFORM ghcr.io/payloadcms/postgis-vector:latest AS base
+
+# declare again for the second stage
+ARG TARGETARCH=amd64
+FROM base
+
+RUN echo "TARGETARCH=$TARGETARCH" && uname -m
 
 
 LABEL org.opencontainers.image.title="postgis-vector-node" \
       org.opencontainers.image.description="postgresql+postgis+node container with pgvector added" \
       org.opencontainers.image.vendor="Payload" \
       org.opencontainers.image.authors="Payload <dev@payloadcms.com>" \
-      org.opencontainers.image.version="1.1.0" \
+      org.opencontainers.image.version="1.2.0" \
       org.opencontainers.image.licenses="MIT" \
       org.opencontainers.image.url="https://github.com/AlessioGr/postgis-vector-node" \
       org.opencontainers.image.source="https://github.com/AlessioGr/postgis-vector-node"
