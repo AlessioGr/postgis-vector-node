@@ -1,31 +1,12 @@
 # syntax=docker/dockerfile:1.7
-
-############################
-# Stage 1: Node.js + pnpm #
-############################
-
-FROM --platform=linux/amd64 debian:bookworm AS node-builder
-
-ARG NODE_VERSION=24.4.0
-ENV NODE_DIR=/usr/local/lib/nodejs/node-v${NODE_VERSION}-linux-x64
-
-RUN apt-get update && apt-get install -y --no-install-recommends \
-    curl xz-utils ca-certificates && \
-    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-x64.tar.xz" -o /tmp/node.tar.xz && \
-    mkdir -p /usr/local/lib/nodejs && \
-    tar -xJf /tmp/node.tar.xz -C /usr/local/lib/nodejs && \
-    ln -sf ${NODE_DIR}/bin/* /usr/local/bin/ && \
-    npm config set prefix /usr/local && \
-    npm install -g pnpm@9.15.6 && \
-    rm /tmp/node.tar.xz && \
-    apt-get purge -y curl xz-utils && apt-get autoremove -y && apt-get clean
-
-############################
-# Stage 2: Final container #
-############################
-
 FROM --platform=$BUILDPLATFORM ghcr.io/payloadcms/postgis-vector:latest AS base
 ARG TARGETARCH
+
+FROM base AS final
+ARG TARGETARCH
+
+RUN echo "BUILDPLATFORM=$BUILDPLATFORM  TARGETARCH=$TARGETARCH  HOSTARCH=$(uname -m)"
+
 
 LABEL org.opencontainers.image.title="postgis-vector-node" \
       org.opencontainers.image.description="postgresql+postgis+node container with pgvector added" \
@@ -36,35 +17,30 @@ LABEL org.opencontainers.image.title="postgis-vector-node" \
       org.opencontainers.image.url="https://github.com/AlessioGr/postgis-vector-node" \
       org.opencontainers.image.source="https://github.com/AlessioGr/postgis-vector-node"
 
-# Optional sanity check
-RUN echo "Detected TARGETARCH=$TARGETARCH, uname=$(uname -m)"
+# ---- system deps ----
+RUN apt-get update && \
+    apt-get install -y --no-install-recommends ca-certificates curl xz-utils && \
+    rm -rf /var/lib/apt/lists/*
 
-# Copy in Node.js and pnpm from the amd64-built stage (safe for both archs)
-COPY --from=node-builder /usr/local/lib/nodejs /usr/local/lib/nodejs
-COPY --from=node-builder /usr/local/bin/node /usr/local/bin/node
-COPY --from=node-builder /usr/local/bin/npm /usr/local/bin/npm
-COPY --from=node-builder /usr/local/bin/npx /usr/local/bin/npx
-COPY --from=node-builder /usr/local/bin/pnpm /usr/local/bin/pnpm
-COPY --from=node-builder /usr/local/bin/corepack /usr/local/bin/corepack
+# ---- Node 24.4.0, correct architecture -------------------------------------
+ARG TARGETARCH
+ENV NODE_VERSION=24.4.0
+RUN set -eux; \
+    case "${TARGETARCH}" in \
+      amd64) NODE_ARCH=x64 ;; \
+      arm64) NODE_ARCH=arm64 ;; \
+      *)     echo "Unsupported arch ${TARGETARCH}" && exit 1 ;; \
+    esac && \
+    curl -fsSL "https://nodejs.org/dist/v${NODE_VERSION}/node-v${NODE_VERSION}-linux-${NODE_ARCH}.tar.xz" \
+      -o /tmp/node.tar.xz && \
+    mkdir -p /usr/local/lib/nodejs && \
+    tar -xJf /tmp/node.tar.xz -C /usr/local/lib/nodejs && \
+    ln -sf /usr/local/lib/nodejs/node-v${NODE_VERSION}-linux-${NODE_ARCH}/bin/* /usr/local/bin/ && \
+    rm /tmp/node.tar.xz
 
-# Workdir
-WORKDIR /app
+# ---- Install pnpm ----
+RUN npm config set prefix /usr/local && \
+    npm install -g pnpm@9.15.6
 
-# Preinstall deps
-COPY package.json pnpm-lock.yaml ./
-COPY ./*.tgz ./
-RUN pnpm install --frozen-lockfile
-
-# Copy source and build
-COPY . .
-RUN pnpm build --experimental-build-mode compile
-
-# Replace postgres entrypoint with node wrapper
-RUN mv /usr/local/bin/docker-entrypoint.sh /usr/local/bin/postgres-entrypoint.sh
-COPY docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Expose ports
-EXPOSE 5432 3000
-
-ENTRYPOINT ["docker-entrypoint.sh"]
+# check and print pnpm version. This ensures pnpm is installed correctly
+RUN pnpm --version
