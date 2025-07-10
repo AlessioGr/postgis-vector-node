@@ -1,14 +1,10 @@
 # syntax=docker/dockerfile:1.7
-# -------------------------------------------------------------
-# Image: ghcr.io/payloadcms/postgis-vector + Node + pnpm
-# Multi‑arch: linux/amd64, linux/arm64
-# Node: 24.4.0   |   pnpm: 9.15.6
-# -------------------------------------------------------------
-ARG TARGETPLATFORM
-# amd64 | arm64
+
+# —► let Buildx pick the right variant for each worker ◄—
+FROM ghcr.io/payloadcms/postgis-vector:latest
+
 ARG TARGETARCH
 
-FROM --platform=$TARGETPLATFORM ghcr.io/payloadcms/postgis-vector:latest
 
 # ---- basic tooling ----------------------------------------------------------
 RUN apt-get update -qq \
