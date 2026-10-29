@@ -14,7 +14,7 @@ RUN apt-get update -qq \
 
 # ---- Node.js ---------------------------------------------------------------
 ARG TARGETARCH
-ENV NODE_VERSION=24.4.0
+ENV NODE_VERSION=24.22.2
 
 RUN set -eux ; \
     case "$TARGETARCH" in \
@@ -31,7 +31,7 @@ RUN set -eux ; \
     ln -sf /usr/local/bin/npx   /usr/bin/npx
 
 # ---- pnpm (regular CLI, no Corepack) ---------------------------------------
-ENV PNPM_VERSION=9.15.6
+ENV PNPM_VERSION=11.28.8
 
 # install + sanity check
 RUN npm install -g "pnpm@${PNPM_VERSION}" \
@@ -42,6 +42,6 @@ LABEL org.opencontainers.image.title="postgis-vector-node" \
       org.opencontainers.image.description="PostgreSQL+PostGIS+pgvector with Node & pnpm" \
       org.opencontainers.image.vendor="Payload" \
       org.opencontainers.image.authors="Payload <dev@payloadcms.com>" \
-      org.opencontainers.image.version="1.5.0" \
+      org.opencontainers.image.version="1.6.0" \
       org.opencontainers.image.licenses="MIT"
 
